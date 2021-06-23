@@ -4,7 +4,7 @@
 - split dataset into subsets of joint distributions
 - train models on subsets
 - ???
-- profit 
+- profit
 - compare
 	- if bayes, how to coeff changes
 	- general prediction quality
@@ -32,7 +32,7 @@ splits = [2.5, 2.5, 0.9, 0.322, 15, 1.1, 77.5, 3.657, 2.5]
 
 
 
-![initial results](joint-dist-results-22-06-21.png)
+![initial results](/joint-dist-results-23-06-21.png)
 
 ### Next Steps
 
