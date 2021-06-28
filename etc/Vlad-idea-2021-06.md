@@ -19,10 +19,12 @@
 ### Results
 
 
-![Initial KDE vs Coefs. results for plasma current](https://github.com/fusionby2030/greedy-pillows/blob/master/src/out/splits/images/KDE_vs_COEF-$\I_P$.png)
+![Initial KDE vs Coefs. results for plasma current](https://github.com/fusionby2030/greedy-pillows/blob/master/src/out/splits/KDE_vs_COEF-%24I_P%24.png)
 
 
-![Initial KDE vs Coefs. results for minor radius](https://github.com/fusionby2030/greedy-pillows/blob/master/src/out/splits/images/KDE_vs_COEF-$a$.png)
+![Initial KDE vs Coefs. results for minor radius](https://github.com/fusionby2030/greedy-pillows/blob/master/src/out/splits/KDE_vs_COEF-%24a%24.png)
+
+More figures found in `src/out/splits/`
 
 ### Next Steps
 

@@ -14,8 +14,8 @@ Currently using JET pedestal database, 3000+ shots from JET, all containing main
   - Randomly drop values from main engineering cols and train unsupervised model to determine them from other cols.
 3. KDE separation of input variables (`etc/Vlad-idea-2021-06`)
   - into two datasets (for each input variable), fit linear models and compare their coefficients.
-  
-![initial KDE results ](https://github.com/fusionby2030/greedy-pillows/blob/master/src/out/splits/images/KDE_vs_COEF-$\I_P$.png)
+
+![initial KDE results ](https://github.com/fusionby2030/greedy-pillows/blob/master/src/out/splits/KDE_vs_COEF-%24I_P%24.png)
 
 4. Tabnet (`etc/Chris-idea-20212-06`)
   - new fancy architectures
