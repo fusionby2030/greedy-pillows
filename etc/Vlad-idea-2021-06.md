@@ -21,7 +21,6 @@
 - **a** has big change when Ip is split
 - **BT** changes somewhere
 - Ip obviously plays a big roll
-- Random Forest added
 
 ```
 main_engineer = ['Ip(MA)', 'B(T)', 'a(m)', 'averagetriangularity',
@@ -38,11 +37,10 @@ splits = [2.5, 2.5, 0.9, 0.322, 15, 1.1, 77.5, 3.657, 2.5]
 
 - Plot Bar plots instead since above plot makes no sense if anyone were to look at it
 	- coefs without split
-	- Split 1 coefs vs spilt 2 for each variable 
+	- Split 1 coefs vs spilt 2 for each variable
 	- Show exactly where split occurs using KDE
-- Splitting 
-	- automated with KDE instead of by hand 
+- Splitting
+	- automated with KDE instead of by hand
 
 - Bayes, could then compare KLD of the two posteriors.
 - Understand what the hell it means
-
