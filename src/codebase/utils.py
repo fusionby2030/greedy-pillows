@@ -68,6 +68,26 @@ def prepare_dataset(file_loc, input_variables, target_variables, return_numpy=Tr
         return input_df.to_numpy(), target_df.to_numpy(), input_err_df.to_numpy(), target_err_df.to_numpy()
     return input_df, target_df, input_err_df, target_err_df
 
+def plot_predictions(predictions, true_vals, color='orange', save_fig=False, save_dir='..../out/STANDALONE'):
+    import matplotlib.pyplot as plt
+    SMALL_SIZE = 22
+    MEDIUM_SIZE = 30
+
+    plt.rc('font', size=MEDIUM_SIZE, weight='bold')
+    plt.rc('axes', titlesize=MEDIUM_SIZE, labelsize=MEDIUM_SIZE)
+    plt.rc('xtick', labelsize=SMALL_SIZE)
+    plt.rc('ytick', labelsize=SMALL_SIZE)
+    plt.rc('legend', fontsize=MEDIUM_SIZE)
+    fig = plt.figure(figsize=(18, 18))
+
+    plt.scatter(true_vals, predictions, label='Predictions', c=color, edgecolors=(0, 0, 0))
+    plt.plot([min(true_vals), max(true_vals)], [min(true_vals), max(true_vals)], 'r--')
+    plt.xlabel('Real $n_e^{ped}$')
+    plt.ylabel('Predicted $n_e^{ped}$')
+    if save_fig and save_dir is not None:
+        plt.savefig(save_dir)
+    plt.show()
+
 def create_joint_distr(X, y, col, split):
     """
 
@@ -79,7 +99,7 @@ def create_joint_distr(X, y, col, split):
     returns: X1, y1, X2, y2
     """
     all_index = X.index.to_list()
-    X1 = X[X[col] >= split]
+    X1 = X[X[col] > split]
     # Need to get indicies from X1 and pass to y1 and use the rest for the X2.
     indicies_X1 = X1.index.to_list()
     y1 = y.iloc[indicies_X1]
