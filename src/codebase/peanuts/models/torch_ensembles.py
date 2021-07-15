@@ -8,10 +8,9 @@ from .utils import save_load_torch
 
 class AverageTorchRegressor(BaseTorchRegressor):
     """
-      In fusion-based ensemble, predictions from all base estimators are
-      first aggregated as an average output. After then, the training loss is
-      computed based on this average output and the ground-truth. The training
-      loss is then back-propagated to all base estimators simultaneously.
+      In this, predictions from all base estimators are first aggregated as an average output. 
+      After then, the training loss is computed based on this average output and the ground-truth. 
+      The training loss is then back-propagated to all base estimators simultaneously.
     """
 
     def forward(self, x, return_std=False):
@@ -34,6 +33,7 @@ class AverageTorchRegressor(BaseTorchRegressor):
 
     def fit(self, train_loader, epochs=150, log_interval=25, test_loader=None, save_model=True, save_dir=None, nni=False, cache_save=False):
         # Create the base estimator and set attributes
+        # This is like a cheating way to do it, but works every time :-) 
         self.n_outputs, self.n_inputs = self._decide_n_outputs(train_loader)
 
         for _ in range(self.n_estimators):

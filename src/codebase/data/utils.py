@@ -27,7 +27,7 @@ scale = True
 n_samples = 15 # Number of samples for low and high neped in validation set
 neped_split = 9.5 # where the high density begins and low density ends
 
-def load_data():
+def load_data_torch():
 	if os.path.exists('./datasets.pickle'):
 		with open('./datasets.pickle', 'rb') as file:
 		    datasets = pickle.load(file)
