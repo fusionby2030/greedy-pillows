@@ -129,6 +129,7 @@ class PedFFNN(nn.Module):
         target_size = 1
         input_size = 10
         act_func = torch.nn.ELU()
+        out_act = torch.nn.ReLU()
 
         last_size = input_size
 
@@ -139,7 +140,7 @@ class PedFFNN(nn.Module):
             self.hidden_layers.append(self._fc_block(last_size, size, act_func))
             last_size = size
 
-        self.out = torch.nn.Linear(last_size, target_size)
+        self.out = self._fc_block(last_size, target_size, out_act)
 
     def forward(self, x):
         for layer in self.hidden_layers:
@@ -174,15 +175,15 @@ class PedFFNN(nn.Module):
         return pred
 
 
-def check_frozen_weights():
+def check_frozen_weights(model):
     # this is a future test case that I will totally write.
     print('Check if frozen actuallly')
     for name, para in model.named_parameters():
-        if para.requires_grad is False and ('2.0' in name or '3.0' in name):
-            print(name, para)
+        if para.requires_grad is True:
+            print(name)
             # para.requires_grad = False
 
-def plot_comparison(true_vals, predictions_low, predictions_high):
+def plot_comparison(true_vals, predictions_low, predictions_high, RMSE_dict = None, **args):
     import matplotlib.pyplot as plt
     SMALL_SIZE = 40
     MEDIUM_SIZE = 45
@@ -197,12 +198,17 @@ def plot_comparison(true_vals, predictions_low, predictions_high):
     plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
 
     fig, axs = plt.subplots(1, 1, figsize=(18, 18))
-    axs.scatter(true_vals, predictions_low, s=100, label='Train on Low')
+    axs.scatter(true_vals, predictions_low, s=100, label='Train on Low: {:.4}'.format(RMSE_dict['RMSE_low']))
     axs.plot([min(true_vals), max(true_vals)], [min(true_vals), max(true_vals)], 'r--')
-    axs.scatter(true_vals, predictions_high, s=100, label='After Transfer')
+    axs.scatter(true_vals, predictions_high, s=100, label='After Transfer: {:.4}'.format(RMSE_dict['RMSE']))
     axs.set(title='Transfer Learning on split $n_e^{ped} \geq 9.5 x 10^{21}$', xlabel='True $n_e^{ped} (10^{21}$m$^{-3})$', ylabel='Predicted')
     plt.legend()
-    plt.show()
+    if args['output_loc']:
+        file_name = args['output_loc'] + "transfer-learning_" + str(args['batch_size_transfer']) + "_" + str(args['non_freeze']) + "_" +str(args['learning_rate_transfer']) + "_" + '_'.join(str(e) for e in args['hidden_layer_sizes']) + '.png'
+        # print(file_name)
+        plt.savefig(file_name)
+    else:
+        plt.show()
 
 
 def main(**kwargs):
@@ -218,8 +224,10 @@ def main(**kwargs):
     test_loader = torch.utils.data.DataLoader(datasets[2], 1, shuffle=True)
     base_model = PedFFNN
     model = AverageTorchRegressor(estimator=base_model, n_estimators=kwargs['n_estimators'], estimator_args={'hidden_layer_sizes': kwargs['hidden_layer_sizes']})
-    model.set_optimizer('Adam', lr=kwargs['lr'])
+    model.set_optimizer('Adam', lr=kwargs['learning_rate'])
     model.double()
+
+    # TODO: IF THERE EXISTS SOME CHECKPOINT ALREADY THEN SKIP
     state_low = model.fit(train_loader=low_neped_loader, test_loader=test_loader, epochs=kwargs['epochs'], cache_save=True)
 
     model = AverageTorchRegressor(estimator=base_model, n_estimators=kwargs['n_estimators'], estimator_args={'hidden_layer_sizes': kwargs['hidden_layer_sizes']})
@@ -230,21 +238,21 @@ def main(**kwargs):
 
     # Freeze model
     for name, param in model.named_parameters():
-        print(name, param)
+        # print(name, param)
         if param.requires_grad and kwargs['non_freeze'] in name:
             pass
         else:
             param.requires_grad = False
 
+    check_frozen_weights(model)
     # retrain on high neped
     high_neped_loader = torch.utils.data.DataLoader(datasets[1], kwargs['batch_size_transfer'], shuffle=True)
-    model.set_optimizer('Adam', lr=kwargs['lr_transfer'])
+    model.set_optimizer('Adam', lr=kwargs['learning_rate_transfer'])
 
 
     state_high = model.fit(train_loader=high_neped_loader, test_loader=test_loader, epochs=kwargs['epochs_transfer'], cache_save=True)
     model = AverageTorchRegressor(estimator=base_model, n_estimators=kwargs['n_estimators'], estimator_args={'hidden_layer_sizes': kwargs['hidden_layer_sizes']})
     save_load_torch.load_cache_save(model, state_high)
-
 
     predictions_high = model.predict(datasets[2].inputs)
     RMSE_high = mean_squared_error(datasets[2].outputs, predictions_high, squared=False)
@@ -252,43 +260,74 @@ def main(**kwargs):
     # print(list(itertools.chain(*predictions_high.tolist())))
     RMSE_dict = {'RMSE': RMSE_high.item(), 'RMSE_low': RMSE_low.item()}
     current_results = {'hyperparameters': kwargs, 'RMSE': RMSE_high.item(), 'RMSE_low': RMSE_low.item(), 'predictions_low': predictions_low.tolist(), 'predictions_high': predictions_high.tolist()}
-    print(current_results)
+    print(RMSE_dict)
+    necessary_results = kwargs.copy()
+    necessary_results['RMSE_post'] = RMSE_high
+    necessary_results['RMSE_pre'] = RMSE_low
+    necessary_results['hidden_layer_sizes'] = '_'.join(str(e) for e in args['hidden_layer_sizes'])
+    # necessary_results = {k:[v] for k, v in necessary_results.items()}
+    # print(necessary_results)
+    # print(current_results)
     """
     df = pd.DataFrame.from_dict(results, dtype=object)
     print(df)
     df.to_csv(kwargs['output_file'], mode='a', header=not os.path.exists(kwargs['output_file']))
     """
-    if kwargs['plot']:
-        plot_comparison(datasets[2].outputs, predictions_low.tolist(), predictions_high.tolist())
-
+    if kwargs['plot'] >=1:
+        plot_comparison(datasets[2].outputs, predictions_low.tolist(), predictions_high.tolist(), RMSE_dict, **kwargs)
+        try:
+            write_to_file(necessary_results, kwargs['output_loc'] + 'results_transfer_search.csv')
+            print('updated CSV I suppose')
+        except Exception as e:
+            print('something bad happened so making a new file')
+            print(e)
+            create_file(necessary_results,kwargs['output_loc'] + 'results_transfer_search.csv')
     return current_results
 
+def write_to_file(dict_to_write, output_loc):
+    from csv import DictWriter
+    if not os.path.exists(output_loc):
+        raise Exception
+    headers = list(dict_to_write.keys())
+    with open(output_loc, 'a', newline='') as f_object:
+        dict_writer_object = DictWriter(f_object, fieldnames=headers)
+        dict_writer_object.writerow(dict_to_write)
+        f_object.close()
 
+def create_file(dict_to_write, output_loc):
+    import csv
+    necessary_results = {k:[v] for k, v in dict_to_write.items()}
+    df_old = pd.DataFrame.from_dict(necessary_results)
+    df_old.to_csv(output_loc, index=False)
 
 import argparse
 if __name__ == '__main__':
+    torch.manual_seed(42)
     parser = argparse.ArgumentParser()
     parser.add_argument("-batch_size", help='batch size during training/validation', type=int, default=396)
-    parser.add_argument("-batch_size_transfer", help='batch size during transfer training', type=int, default=1)
-    parser.add_argument("-epochs", help='epochs for initial pre training', type=int, default=200)
-    parser.add_argument("-epochs_transfer", help='epochs for initial pre training', type=int, default=15)
-    parser.add_argument('-lr', help='learning rate', type=float, default=0.004)
-    parser.add_argument('-lr_transfer', help='learning rate for transfer learning', type=float, default=0.00001)
+    parser.add_argument("-bst", '--batch_size_transfer', help='batch size during transfer training', type=int, default=1)
+    parser.add_argument("-ep", "--epochs", help='epochs for initial pre training', type=int, default=200)
+    parser.add_argument("-ept", "--epochs_transfer", help='epochs for initial pre training', type=int, default=200)
+    parser.add_argument('-lr', "--learning_rate", help='learning rate', type=float, default=0.004)
+    parser.add_argument('-lrt', "--learning_rate_transfer", help='learning rate for transfer learning', type=float, default=0.00001)
     parser.add_argument('-n_splits', help='number of folds in CV', type=int, default=5)
     parser.add_argument('-n_repeats', help='number of repeats of CV', type=int, default=2)
     parser.add_argument('-n_estimators', help='Number of ANNs in ensemble, 1 is default ANN',type=int, default=1)
-    parser.add_argument('-plot', help='Include plot at the end', type=bool, default=False)
+    parser.add_argument('-plot', help='Include plot at the end', action="count", default=0)
     parser.add_argument('-dataset_loc', help='If the dataset is a pickle, then load it like this', type=str, default='./datasets.pickle')
-    parser.add_argument('-output_file', help='Which csv will hold your output', type=str, default='./out/results_transfer_search.json')
-    parser.add_argument('-non_freeze', help='what layer NOT to freeze', default='out', const='out', nargs='?', choices=['3.0', '4.0', 'out'])
-    parser.add_argument('--smoke_test', help='Smoke Test, quickly check if it works', action="count", default=0)
+    parser.add_argument('-output_loc', help='Which csv will hold your output', type=str, default='')
+    parser.add_argument('-non_freeze', help='what layer NOT to freeze', default='out', const='out', nargs='?', choices=['5.0', '4.0', '3.0', '2.0', 'out'])
+    parser.add_argument('-st', '--smoke_test', help='Smoke Test, quickly check if it works', action="count", default=0)
+    parser.add_argument('-hslist', '--hidden_layer_sizes', help='List of hidden layers [h1_size, h2_size, ..., ]', nargs='+', default=[600, 600, 600, 600], type=int)
     args_namespace = parser.parse_args()
     args = vars(args_namespace)
 
-    args['hidden_layer_sizes'] = [600, 400, 300, 250, 30]
+    # args['hidden_layer_sizes'] = [636, 537, 295, 261]
     if args['smoke_test'] >=1:
         smoke_args = {'hidden_layer_sizes': [10, 10, 10, 10], 'n_estimators': 1, 'epochs': 25}
         args.update(smoke_args)
+        print('Starting smoke test')
         main(**args)
+        print('Smoke Test Passed')
     else:
         main(**args)
