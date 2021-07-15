@@ -50,32 +50,29 @@ predictions
 
 import pandas as pd
 import numpy as np
+
 import torch
 import torch.nn as nn
 
-import itertools # used for the chain
+# import itertools # used for the chain
 
 
-class ANNtorchdataset(torch.utils.data.Dataset):
-    def __init__(self, controls, targets):
-        self.inputs = controls
-        self.outputs = targets
 
-    def __len__(self):
-        return len(self.outputs)
+from sklearn.metrics import mean_squared_error, mean_absolute_error # ye old metric gathers
 
-    def __getitem__(self, item):
-        return self.inputs[item], self.outputs[item]
-
-
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import mean_squared_error, mean_absolute_error
-
-from codebase.peanuts.models.utils import set_module_torch, save_load_torch
+from codebase.peanuts.models.utils import set_module_torch, save_load_torch # For saving and loading torch models
 from codebase.peanuts.models.torch_ensembles import AverageTorchRegressor
+from codebase.data.utils import ANNtorchdataset, load_data
+
 
 import os
 import pickle
+
+
+
+
+
+
 def make_datasets(pickle_datasets=False):
     """
     Either take the df, or do everything here,
