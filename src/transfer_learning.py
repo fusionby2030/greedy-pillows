@@ -67,8 +67,7 @@ class ANNtorchdataset(torch.utils.data.Dataset):
     def __getitem__(self, item):
         return self.inputs[item], self.outputs[item]
 
-# TODO: Warning about copying a slice from Dataframe.
-from sklearn.pipeline import Pipeline
+
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 
@@ -90,11 +89,11 @@ def make_datasets(pickle_datasets=False):
 
     target = ['nepedheight1019(m-3)']
 
-    # should probably scale everything between 0 and 1
+    # Scale main_eng params between 0 and 1
     # This is probably not best practice since I should split scaling
     # between train and validation, but fuck it this is proof of concept
     ss = StandardScaler()
-    df[main_eng] = ss.fit_transform(df[main_eng])
+    df[main_eng] = ss.fit_transform(df[main_eng]) # TODO: Warning about copying a slice from Dataframe.
 
 
     low_neped = df[df['nepedheight1019(m-3)'] < 9.5]
@@ -110,7 +109,6 @@ def make_datasets(pickle_datasets=False):
 
     # combine removed samples to validation set
     df_sample = pd.concat([low_neped_sample, high_neped_sample])
-
 
     # now make into input and outputs set
     train_low_neped = ANNtorchdataset(low_neped[main_eng].to_numpy(np.float32), low_neped[target].to_numpy(np.float32))
