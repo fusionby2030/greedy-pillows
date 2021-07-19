@@ -2,11 +2,6 @@
 author: Adam Kit <adam.kit@aalto.fi>
 date: 12.07.21
 
-This program is supposed to be a rough outline of transfer learning
-on the prediction of high neped values from JET pedestal database.
-
-High neped is defined as nedped >= 0.95 x 10^{22}
-At this density, a different regime of physics is occuring.
 
 Various variable names occur, which are cleared up here.
 The model that is trained on low neped values is sometimes refered to as:

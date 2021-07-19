@@ -3,24 +3,24 @@ from sklearn.preprocessing import StandardScaler # to scale data between 0 and 1
 import torch # For torch dataset
 import os # to check if there is already a pickled form to skip the processing
 import pickle # for pickling fun
-
+import numpy as np
 
 class ANNtorchdataset(torch.utils.data.Dataset):
-    def __init__(self, controls, targets):
-        self.inputs = controls
-        self.outputs = targets
+	def __init__(self, controls, targets):
+		self.inputs = controls
+		self.outputs = targets.ravel()
 
-    def __len__(self):
-        return len(self.outputs)
+	def __len__(self):
+		return len(self.outputs)
 
-    def __getitem__(self, item):
-        return self.inputs[item], self.outputs[item]
+	def __getitem__(self, item):
+		return self.inputs[item], self.outputs[item]
 
 
 filename = '/home/adam/data/seperatrix_dataset.csv'
 main_eng = ['Ip(MA)', 'B(T)', 'a(m)', 'averagetriangularity',
-                 'P_NBI(MW)', 'P_ICRH(MW)','P_TOTPNBIPohmPICRH-Pshi(MW)',
-                 'plasmavolume(m3)', 'q95', 'gasflowrateofmainspecies1022(es)']
+				 'P_NBI(MW)', 'P_ICRH(MW)','P_TOTPNBIPohmPICRH-Pshi(MW)',
+				 'plasmavolume(m3)', 'q95', 'gasflowrateofmainspecies1022(es)']
 
 target = 'nepedheight1019(m-3)'
 scale = True
@@ -30,8 +30,9 @@ neped_split = 9.5 # where the high density begins and low density ends
 def load_data_torch():
 	if os.path.exists('./datasets.pickle'):
 		with open('./datasets.pickle', 'rb') as file:
-		    datasets = pickle.load(file)
-	return datasets
+			datasets = pickle.load(file)
+		return datasets
+	df = pd.read_csv(filename)
 	if scale:
 		ss = StandardScaler()
 		df[main_eng] = ss.fit_transform(df[main_eng])
