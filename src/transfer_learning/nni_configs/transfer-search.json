@@ -1,0 +1,7 @@
+{
+  "freeze_layer": {"_type": "choice", "_value": ["out", "2.0", "3.0", "1.0", "0.0"]},
+  "batch_size_high":  {"_type": "randint", "_value":[1, 15]},
+  "batch_size_low":  {"_type": "randint", "_value":[10, 600]},
+  "learning_rate_high": {"_type": "uniform", "_value": [0.000001, 0.01]},
+  "learning_rate_low": {"_type": "uniform", "_value": [0.00001, 0.01]}
+}
