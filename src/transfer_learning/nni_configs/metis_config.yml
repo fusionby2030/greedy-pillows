@@ -1,0 +1,16 @@
+authorName: fusionby2030
+experimentName: high-neped-ELU-search-metis
+trialConcurrency: 2
+maxExecDuration: 18h
+maxTrialNum: 5000
+trainingServicePlatform: local
+searchSpacePath: low-neped-arch-search.json
+useAnnotation: false
+tuner:
+  builtinTunerName: MetisTuner
+  classArgs:
+    optimize_mode: maximize
+trial:
+        command: python3 nni_search_low.py
+        codeDir: ..
+        gpuNum: 0

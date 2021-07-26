@@ -1,0 +1,8 @@
+{
+  "h1":  {"_type": "randint", "_value":[10, 425]},
+  "h2":  {"_type": "randint", "_value":[10, 400]},
+  "h3":  {"_type": "randint", "_value":[10, 275]},
+  "h4":  {"_type": "randint", "_value":[10, 600]},
+  "h5":  {"_type": "randint", "_value":[10, 600]},
+  "h6":  {"_type": "randint", "_value":[450, 700]}
+}

@@ -83,6 +83,7 @@ class AverageTorchRegressor(BaseTorchRegressor):
                         if save_model:
                             if cache_save:
                                 best_model_state_dict = save_load_torch.cache_save(self, self.logger)
+                                self.logger.info('Saving State Dict at epoch {}'.format(epoch))
                             else:
                                 save_load_torch.save(self, save_dir, self.logger)
 

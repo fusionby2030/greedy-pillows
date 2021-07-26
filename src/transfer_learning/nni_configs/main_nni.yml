@@ -1,14 +1,14 @@
-authorName: your_name
-experimentName: transfer-learning-trials-with-cv
-trialConcurrency: 1
-maxExecDuration: 5h
+authorName: fusionby2030
+experimentName: high-neped-search-freeze_layer-6-layers
+trialConcurrency: 2
+maxExecDuration: 18h
 maxTrialNum: 5000
 trainingServicePlatform: local
-searchSpacePath: transfer-search.json
+searchSpacePath: high-neped-search.json
 useAnnotation: false
 tuner:
         builtinTunerName: Random
 trial:
-        command: python3 nni_search.py
+        command: python3 nni_search_high.py
         codeDir: ..
         gpuNum: 0

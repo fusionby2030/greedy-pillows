@@ -15,7 +15,9 @@ def get_act_func(act_func_name):
     "Sigmoid",
     "SiLU",
     "None",
-    None,  
+    "CELU",
+    "Tanh",
+    None,
     ]
     if act_func_name not in torch_act_funcs:
         msg = "Unrecognized activation funciton: {}, should be one of {}."

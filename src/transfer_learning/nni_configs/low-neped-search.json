@@ -1,0 +1,5 @@
+{
+  "batch_size_low":  {"_type": "randint", "_value":[50, 600]},
+  "learning_rate_low": {"_type": "uniform", "_value": [0.00001, 0.01]},
+  "epochs_low": {"_type": "randint", "_value":[150, 250]}
+}

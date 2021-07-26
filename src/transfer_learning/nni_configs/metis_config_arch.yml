@@ -1,0 +1,30 @@
+searchSpace:
+  h1:
+    _type: randint
+    _value: [100, 1000]
+  h2:
+    _type: randint
+    _value: [100, 1000]
+  h3:
+    _type: randint
+    _value: [100, 1000]
+  h4:
+    _type: randint
+    _value: [100, 1000]
+
+authorName: fusionby2030
+experimentName: transfer-learning-trials-with-metis-arch
+trialConcurrency: 3
+maxExecDuration: 18h
+maxTrialNum: 5000
+trainingServicePlatform: local
+searchSpacePath: transfer-search.json
+useAnnotation: false
+tuner:
+        name: MetisTuner
+        classArgs:
+            optimize_mode: maximize
+trial:
+        command: python3 nni_search.py
+        codeDir: ..
+        gpuNum: 0
