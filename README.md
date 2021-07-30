@@ -7,7 +7,9 @@
 - Transfer Learning to attain high neped.
   - ANN's in `/src/transfer_learning.py`
     - Make a model trained on low neped, then freeze layers except for last layer, train again on high neped. 
-
+- Autoencoders in `/src/vae-shenanigans/`
+	- to run experiments, check `python3 /src/vae-shenanigans/run.py --help` but be warned about dependencies.
+	- see `/src/vae_shenanigans/{name_TBD}.pdf`, i.e., the only pdf file in the dir
 
 ![Raw HRTS vs MTANH Fit](https://github.com/fusionby2030/greedy-pillows/blob/master/doc/images/MTANH_fit_21.png)
 
