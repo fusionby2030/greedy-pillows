@@ -18,9 +18,8 @@ class ANNtorchdataset(torch.utils.data.Dataset):
 
 
 scale = True
-n_samples = 15 # Number of samples for low and high neped in validation set
+n_samples = 10 # Number of samples for low and high neped in validation set
 neped_split = 9.5 # where the high density begins and low density ends
-
 
 def load_data_torch(**kwargs):
 	"""if os.path.exists('./data/datasets.pickle'):
@@ -52,13 +51,13 @@ def load_data_torch(**kwargs):
 		df[main_eng] = ss.fit_transform(df[main_eng])
 		# df[target] = ss_2.fit_transform(df[main_eng])
 
-	feature_space = df[main_eng].to_numpy()
-	target_space = df[target].to_numpy()
+	# feature_space = df[main_eng].to_numpy()
+	# target_space = df[target].to_numpy()
 	# Min: 1.8494685
 	# print('min', target_space.min())
 	# Max: 11.737379
 	# print('max', target_space.max())
-	"""low_neped = df[df[target] < neped_split]
+	low_neped = df[df[target] < neped_split]
 	high_neped = df[df[target] >= neped_split]
 
 	# sample 15 shots from each set
@@ -80,7 +79,8 @@ def load_data_torch(**kwargs):
 	# train_high_neped = ANNtorchdataset(high_neped[main_eng].to_numpy(np.float32), high_neped[target].to_numpy(np.float32))
 	# validation = ANNtorchdataset(df_sample[main_eng].to_numpy(np.float32), df_sample[target].to_numpy(np.float32))
 	"""
-	dataset = (feature_space, target_space)
+	dataset = (low_neped_set, high_neped_set, final_exam_set)
+	print(dataset)
 	with open('./data/datasets.pickle', 'wb') as file:
 		pickle.dump(dataset, file)
 	return dataset, ss

@@ -1,0 +1,6 @@
+{
+  "batch_size": {"_type": "randint", "_value":[400, 440]},
+  "learning_rate": {"_type": "uniform", "_value": [0.00015, 0.0012]},
+  "latent_dim": {"_type": "randint", "_value":[2, 45]},
+  "epochs": {"_type": "randint", "_value":[100, 225]}
+}

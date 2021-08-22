@@ -1,0 +1,23 @@
+{
+  "classifier": {
+    "_type": "choice",
+    "_value":
+    [
+      {
+        "_name": "NearestCentroid",
+        "metric":{
+          "_type": "choice",
+          "_value": ["cityblock", "cosine", "euclidean", "l1", "l2", "manhattan"]
+        },
+        "shrink_threshold": {
+          "_type": "quniform",
+          "_value": [0.01, 0.99, 0.01]
+        }
+      },
+      {
+        "_name": "KMeansCluster"
+      }
+    ]
+  },
+  "latent_dim": {"_type": "randint", "_value":[2, 100]}
+}

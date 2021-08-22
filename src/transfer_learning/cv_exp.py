@@ -153,7 +153,7 @@ def pseudo_main(args):
     high_neped_scores = np.zeros((2, args.l_splits*args.h_splits))
     final_exam_pre_transfer = np.zeros((2, args.l_splits))
     final_exam_post_transfer= np.zeros((2, args.l_splits*args.h_splits))
-
+    transfer_RMSEs = np.zeros(args.l_splits*args.h_splits)
     # Index of which split we are on
     h_split_index = l_split_index = 0
 
@@ -162,7 +162,7 @@ def pseudo_main(args):
     cv_low = KFold(n_splits=args.l_splits, shuffle=True, random_state=42)
     low_neped_iterator = tqdm.tqdm(enumerate(cv_low.split(low_neped[0])), desc='pre transfer learning')
     for num, (train, test) in low_neped_iterator:
-        torch.manual_seed(10)
+        torch.manual_seed(20)
         # X_train, y_train = low_neped[0][train], low_neped[1][train]
         # X_test, y_test = low_neped[0][test], low_neped[1][test]
         train_set = utils.ANNtorchdataset(low_neped[0][train], low_neped[1][train])
@@ -175,7 +175,7 @@ def pseudo_main(args):
         model = initalize_model(n_estimators= args.n_estimators, hidden_layer_sizes = args.hidden_layer_sizes, learning_rate=args.learning_rate_low)
         model_dict_cache = model.fit(train_loader=train_loader, test_loader=test_loader, epochs=args.epochs_low)
         # load cached model
-        model = initalize_model(n_estimators= args.n_estimators, hidden_layer_sizes = args.hidden_layer_sizes, learning_rate=args.learning_rate_low, state_dict=model_dict_cache)
+        model = initalize_model(n_estimators= args.n_estimators, hidden_layer_sizes = args.hidden_layer_sizes, learning_rate=args.learning_rate_high, state_dict=model_dict_cache)
         # calc. low neped RMSE and MAE ->  top: RMSE, bot: MAE, low_neped_scores[0][l_split_index] = RMSE_l_split
         # calc. pre_transfer_final_exam
         low_neped_predictions = model.predict(test_set.inputs)
@@ -207,21 +207,27 @@ def pseudo_main(args):
             # train on high neped split
             model_dict_cache_h = model.fit(train_loader=train_loader_h, test_loader=test_loader_h, epochs=args.epochs_high)
 
-            model = initalize_model(n_estimators=args.n_estimators, hidden_layer_sizes=args.hidden_layer_sizes, learning_rate=args.learning_rate_high, state_dict=model_dict_cache_h)
+            model_h = initalize_model(n_estimators=args.n_estimators, hidden_layer_sizes=args.hidden_layer_sizes, learning_rate=args.learning_rate_high, state_dict=model_dict_cache_h)
 
             # calc high neped RMSE and MAE (same as low neped style, just with h_split_index)
             # calc. post_transfer_final_exam
-            high_neped_predictions = model.predict(test_set_h.inputs)
+            high_neped_predictions = model_h.predict(test_set_h.inputs)
             high_neped_scores[:, h_split_index] = mean_squared_error(y_true=test_set_h.outputs, y_pred=high_neped_predictions, squared=False), mean_absolute_error(y_true=test_set_h.outputs, y_pred=high_neped_predictions)
+            high_neped_transfer_score = mean_squared_error(y_true=test_set_h.outputs, y_pred=high_neped_predictions, squared=False)
 
-            final_exam_predictions = model.predict(final_exam[0])
+            low_neped_predictions_transfer = model_h.predict(test_set.inputs)
+            low_neped_transfer_score = mean_squared_error(y_true=test_set.outputs, y_pred=low_neped_predictions_transfer, squared=False)
+            transfer_RMSEs[h_split_index] = (high_neped_transfer_score + low_neped_transfer_score ) / 2.0
+
+            final_exam_predictions = model_h.predict(final_exam[0])
             final_exam_post_transfer[:, h_split_index] = mean_squared_error(y_true=final_exam[1], y_pred=final_exam_predictions, squared=False), mean_absolute_error(y_true=final_exam[1], y_pred=final_exam_predictions)
-            high_neped_iterator.set_postfix(scores=final_exam_post_transfer[:, h_split_index])
-            # plot_comparison(true_vals=final_exam[1], predictions_low=final_exam_predictions, predictions_high=None)
-
+            high_neped_iterator.set_postfix(scores=final_exam_post_transfer[:, h_split_index], transfer_rmse=transfer_RMSEs[h_split_index])
+            #plot_comparison(true_vals=final_exam[1], predictions_low=final_exam_predictions, predictions_high=None)
+            plot_comparison(true_vals_low=test_set.outputs ,predictions_low=low_neped_predictions_transfer, true_vals_high=test_set_h.outputs, predictions_high=high_neped_predictions)
+            # plot_comparison(true_vals=test_set_h.outputs, predictions_low=high_neped_predictions, predictions_high=None)
             h_split_index += 1
             # reinitalize model from before transfer learning
-            model = initalize_model(n_estimators= args.n_estimators, hidden_layer_sizes = args.hidden_layer_sizes, learning_rate=args.learning_rate_low, state_dict=model_dict_cache)
+            model = initalize_model(n_estimators= args.n_estimators, hidden_layer_sizes = args.hidden_layer_sizes, learning_rate=args.learning_rate_high, state_dict=model_dict_cache)
 
 
     # final result -> average low/high_neped_scores with np.mean(low/high_neped_scores, 1)
@@ -230,11 +236,12 @@ def pseudo_main(args):
     print(final_exam_post_transfer)
     final_exam_post_tran_score = (np.mean(final_exam_post_transfer, 1), np.std(final_exam_post_transfer, 1))
     msg = "Pre Transfer RMSE: {:.4} +- {:.4} \n Post Transfer RMSE {:.4} +/- {:.4}".format(final_exam_pre_tran_score[0][0], final_exam_pre_tran_score[1][0], final_exam_post_tran_score[0][0], final_exam_pre_tran_score[1][0])
-
-    # save result and relevant hyperparams to a dataframe and export to csv?
     print(msg)
+    print(transfer_RMSEs)
+    # save result and relevant hyperparams to a dataframe and export to csv?
 
-def plot_comparison(true_vals, predictions_low, predictions_high, RMSE_dict = None, output_loc=None):
+
+def plot_comparison(true_vals_low, predictions_low, true_vals_high, predictions_high, RMSE_dict = None, output_loc=None):
     import matplotlib.pyplot as plt
     SMALL_SIZE = 40
     MEDIUM_SIZE = 45
@@ -248,10 +255,14 @@ def plot_comparison(true_vals, predictions_low, predictions_high, RMSE_dict = No
     plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
     plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
 
+    RMSE_high = mean_squared_error(true_vals_high, y_pred=predictions_high, squared=False)
+    RMSE_low = mean_squared_error(true_vals_low, y_pred=predictions_low, squared=False)
+
     fig, axs = plt.subplots(1, 1, figsize=(18, 18))
-    axs.scatter(true_vals, predictions_low, s=100)
-    axs.plot([min(true_vals), max(true_vals)], [min(true_vals), max(true_vals)], 'r--')
-    # axs.scatter(true_vals, predictions_high, s=100, label='After Transfer: {:.4}'.format(RMSE_dict['RMSE_high']))
+    axs.scatter(true_vals_low, predictions_low, s=100, label='low: RMSE {:.4}'.format(RMSE_low))
+    axs.plot([min(true_vals_low), max(true_vals_low)], [min(true_vals_low), max(true_vals_low)], 'r--')
+    axs.plot([min(true_vals_high), max(true_vals_high)], [min(true_vals_high), max(true_vals_high)], 'r--')
+    axs.scatter(true_vals_high, predictions_high, s=100, label='High: RMSE {:.4}'.format(RMSE_high))
     axs.set(title='Transfer Learning on split $n_e^{ped} \geq 9.5 x 10^{21}$', xlabel='True $n_e^{ped} (10^{21}$m$^{-3})$', ylabel='Predicted')
     plt.legend()
     plt.show()
@@ -275,7 +286,7 @@ if __name__ == '__main__':
 
     parser.add_argument('-hslist', '--hidden_layer_sizes', help='List of hidden layers [h1_size, h2_size, ..., ]', nargs='+', default=[100, 100, 100, 100], type=int)
     parser.add_argument('-n_est', '--n_estimators', help='Number of ANNs in ensemble, 1 is default ANN',type=int, default=1)
-    parser.add_argument('-fl', '--freeze_layer', help='Which layer to NOT freeze', default='out', const='out', nargs='?', choices=['5.0', '4.0', '3.0', '2.0', '1.0', '0.0', 'out'])
+    parser.add_argument('-fl', '--freeze_layer', help='Which layer to NOT freeze', default='0.0', const='0.0', nargs='?', choices=['5.0', '4.0', '3.0', '2.0', '1.0', '0.0', 'out'])
     args = parser.parse_args()
 
     pseudo_main(args)

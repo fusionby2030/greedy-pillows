@@ -1,0 +1,57 @@
+{
+  "classifier": {
+    "_type": "choice",
+    "_value":
+    [
+      {
+        "_name": "RNN",
+        "radius": {
+          "_type": "quniform",
+          "_value": [0.1, 5, 0.1]
+        },
+        "weights": {
+          "_type": "choice",
+          "_value": ["uniform", "distance"]
+        },
+        "algorithm": {
+          "_type": "choice",
+          "_value": ["auto", "ball_tree", "kd_tree", "brute"]
+        },
+        "outlier_label": {
+          "_type": "choice",
+          "_value": ["most_frequent", 0, 1]
+        },
+        "metric": {
+          "_type": "choice",
+          "_value":["euclidean", "manhattan", "chebyshev"]
+        }
+      },
+      {
+        "_name": "NearestCentroid",
+        "metric":{
+          "_type": "choice",
+          "_value": ["cityblock", "cosine", "euclidean", "l1", "l2", "manhattan"]
+        },
+        "shrink_threshold": {
+          "_type": "quniform",
+          "_value": [0.01, 0.99, 0.01]
+        }
+      },
+      {
+        "_name": "KMeansCluster"
+      },
+      {
+        "_name": "AgglomerativeClustering",
+        "affinity": {
+          "_type": "choice",
+          "_value": ["euclidean", "l1", "l2", "manhattan", "cosine"]
+        },
+        "linkage": {
+          "_type": "choice",
+          "_value": ["ward", "complete", "average", "single"]
+        }
+      }
+    ]
+  },
+  "latent_dim": {"_type": "randint", "_value":[2, 100]}
+}

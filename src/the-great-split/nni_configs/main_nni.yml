@@ -1,0 +1,14 @@
+authorName: fusionby2030
+experimentName: the-great-split
+trialConcurrency: 2
+maxExecDuration: 18h
+maxTrialNum: 5000
+trainingServicePlatform: local
+searchSpacePath: nested_search.json
+useAnnotation: false
+tuner:
+  builtinTunerName: Random
+trial:
+        command: python3 nni_nested_trial_1.py
+        codeDir: ..
+        gpuNum: 0
