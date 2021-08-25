@@ -21,9 +21,10 @@ from sklearn.metrics import mean_squared_error
 # Saving results
 import pickle
 
+
 def train_model(X_train, y_train, model_type):
     model_params = {"input_dim": 10, "hidden_dims": args.hidden_dims, "latent_dim": args.latent_dim, "cond_dim": 1}
-    if model_type not in ['VanillaVAE', 'BetaVAE', 'ConditionalVAE','SimpleAE']:
+    if model_type not in ['VanillaVAE', 'BetaVAE', 'ConditionalVAE', 'SimpleAE']:
         print(vae_models.values())
         raise ValueError('Invalid Model type, choose VanillaVAE, BetaVAE, ConditionalVAE, or SimpleAE')
     else:
@@ -36,7 +37,6 @@ def train_model(X_train, y_train, model_type):
 
     # Initalize Model
 
-
     optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
     # Train
     model.train()
@@ -45,15 +45,16 @@ def train_model(X_train, y_train, model_type):
         for batch_idx, (x, y) in enumerate(train_loader):
             optimizer.zero_grad()
             results = model.forward(x, conditions=y)
-            train_loss = model.loss_function(*results, M_N = args.batch_size)
+            train_loss = model.loss_function(*results, M_N=args.batch_size)
             train_loss['loss'].backward()
             optimizer.step()
             # print(train_loss)
-            #print('\n')
+            # print('\n')
             # print(train_loss['loss'].item())
         # print(f'Epoch {epoch}\n')
-        auto_train.set_postfix(loss = train_loss['loss'].item(), score=-np.log10(train_loss['loss'].item()))
+        auto_train.set_postfix(loss=train_loss['loss'].item(), score=-np.log10(train_loss['loss'].item()))
     return model
+
 
 def main(**kwargs):
     dataset, input_scaler = utils.load_data_torch(neped_split=kwargs['neped_split'], n_samples=5)
@@ -69,7 +70,6 @@ def main(**kwargs):
 
     avg_losses = {'low': [], 'high': []}
 
-
     for (train, test) in cv_iterator:
         X_train, y_train = low_neped[0][train], low_neped[1][train]
         X_test, y_test = torch.from_numpy(low_neped[0][test]), torch.from_numpy(low_neped[1][test][:, None])
@@ -81,12 +81,12 @@ def main(**kwargs):
         model.eval()
         # all_results = {}
 
-
-
         losses = []
         for x, y in zip(X_test, y_test):
             predictions = model.generate(x, conditions=y)
             loss = mean_squared_error(y_true=x, y_pred=predictions.detach())
+            if isinstance(y, torch.Tensor):
+                y = y.item()
             results[y].append(loss.item())
             losses.append(loss)
         avg_losses['low'].append(np.mean(losses))
@@ -95,6 +95,8 @@ def main(**kwargs):
         for x, y in zip(X_valid, y_valid):
             predictions = model.generate(x, conditions=y)
             loss = mean_squared_error(y_true=x, y_pred=predictions.detach())
+            if isinstance(y, torch.Tensor):
+                y = y.item()
             results[y].append(loss.item())
             losses.append(loss)
         avg_losses['high'].append(np.mean(losses))
@@ -102,6 +104,8 @@ def main(**kwargs):
         for x, y in zip(X_exam, y_exam):
             predictions = model.generate(x, conditions=y)
             loss = mean_squared_error(y_true=x, y_pred=predictions.detach())
+            if isinstance(y, torch.Tensor):
+                y = y.item()
             results[y].append(loss.item())
             losses.append(loss)
 
@@ -111,7 +115,6 @@ def main(**kwargs):
     avg_losses['low'] = np.mean(avg_losses['low'])
     avg_losses['high_std'] = np.std(avg_losses['high'])
     avg_losses['high'] = np.mean(avg_losses['high'])
-
 
     end_results = {'y_val': [], 'std': [], 'recon': []}
     for key, value in results.items():
@@ -123,11 +126,10 @@ def main(**kwargs):
 
 
 def experiment(**kwargs):
-
     final_results = {}
     final_losses = {'split': [], 'low': [], 'high': [], 'low_std': [], 'high_std': []}
 
-    exp_iterator = tqdm(np.linspace(5, 10, num=50),position=0)
+    exp_iterator = tqdm(np.linspace(5, 10, num=50), position=0)
     for i in exp_iterator:
         kwargs['neped_split'] = i
         results, avg_losses = main(**kwargs)
@@ -139,22 +141,21 @@ def experiment(**kwargs):
         final_losses['high_std'].append(avg_losses['high_std'])
         exp_iterator.set_postfix(split=i)
 
-
-    file_name = './out/anom_detect_' + args.vae_type + '_ld' + str(args.latent_dim) + '_split5to10' +  '_results.pickle'
+    file_name = './out/anom_detect_' + args.vae_type + '_ld' + str(args.latent_dim) + '_split5to10' + '_results.pickle'
     with open(file_name, 'wb') as file:
         pickle.dump(final_results, file)
         pickle.dump(final_losses, file)
 
     fig5 = plt.figure()
 
-    plt.scatter(final_losses['split'],final_losses['low'], label='low')
-    plt.scatter(final_losses['split'],final_losses['high'], label='high')
+    plt.scatter(final_losses['split'], final_losses['low'], label='low')
+    plt.scatter(final_losses['split'], final_losses['high'], label='high')
     plt.xlabel('neped split')
     plt.ylabel('Recon Loss')
     plt.legend()
 
     digitized = np.digitize(results['y_val'], np.linspace(1, 12, num=12))
-    residual = [np.abs(results['recon'])[digitized ==i].mean() for i in range(1, 12)]
+    residual = [np.abs(results['recon'])[digitized == i].mean() for i in range(1, 12)]
 
     fig = plt.figure()
 
@@ -166,18 +167,19 @@ def experiment(**kwargs):
     plt.show()
 
 
-
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Reconstruction error for autoencoder, i.e., anomoly detection')
     parser.add_argument("-bs", "--batch_size", help='batch size for training', type=int, default=419)
     parser.add_argument("-ep", "--epochs", help='num epochs', type=int, default=250)
-    parser.add_argument("-lr","--learning_rate", help='learning rate', type=float, default=0.00039)
+    parser.add_argument("-lr", "--learning_rate", help='learning rate', type=float, default=0.00039)
     parser.add_argument("-ld", "--latent_dim", help='Latent Dimensions of AE', default=50, type=int)
-    parser.add_argument('-hslist', '--hidden_dims', help='List of hidden layers [h1_size, h2_size, ..., ]', nargs='+', default=[50, 50, 50], type=int)
-    parser.add_argument("-vae", "--vae_type", help='Which VAE to use, choose SimpleAE if you do not know', default='SimpleAE', type=str)
+    parser.add_argument('-hslist', '--hidden_dims', help='List of hidden layers [h1_size, h2_size, ..., ]', nargs='+',
+                        default=[50, 50, 50], type=int)
+    parser.add_argument("-vae", "--vae_type", help='Which VAE to use, choose SimpleAE if you do not know',
+                        default='SimpleAE', type=str)
 
-    parser.add_argument("-split", "--neped_split", help='Where to split data for highvs low neped', default=9.5, type=float)
+    parser.add_argument("-split", "--neped_split", help='Where to split data for highvs low neped', default=9.5,
+                        type=float)
 
     args = parser.parse_args()
     config = vars(args)

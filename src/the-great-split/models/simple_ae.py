@@ -92,7 +92,7 @@ class SimpleAE(BaseVAE):
     def plot_latent_space(self, data_loader: torch.utils.data.DataLoader, title: str = '', **kwargs)-> torch.Tensor:
         import matplotlib.pyplot as plt
         if kwargs.get('latent_dims'):
-            latent_x, latent_y = latent_dims[0], latent_dims[1]
+            latent_x, latent_y = kwargs['latent_dims'][0], kwargs['latent_dims'][1]
         else:
             latent_x, latent_y = 0, 1
         for i, (x, y) in enumerate(data_loader):

@@ -139,11 +139,11 @@ def experiment(**kwargs):
         kwargs['neped_split'] = split
         with HiddenPrints():
             scores = main(**kwargs)
-        iterator.set_postfix(scores)
+        iterator.set_postfix(LNM =scores['LnM_test'], HNM = HNM_test['HnM_test'])
         for key, val in scores.items():
             scores_final[key].append(val)
 
-    file_name = './out/reg_split_' + kwargs['regression_model_type']  + '_cv_results.pickle'
+    file_name = './out/reg_split_' + kwargs['regression_model_type']  + '_cv_results_robust_scale_neped.pickle'
     with open(file_name, 'wb') as file:
         pickle.dump(scores_final, file)
 
